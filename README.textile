@@ -1,0 +1,7 @@
+This is a simple implementation of a translator from the TeXML XML dialect into TeX syntax.
+
+This is based of Douglas Lovell's paper: "TeXML: Typesetting with TeX", Douglas Lovell, IBM Research in TUGboat, Volume 20 (1999), No. 3.
+
+The code is old, and probably stale (it depends on an XML parsing library which is probably not available anymore), but I guess it is better here on GitHub than simply rotting on my hard drive.
+
+Released under the WTFPL: http://sam.zoy.org/wtfpl/COPYING
