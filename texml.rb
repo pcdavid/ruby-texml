@@ -47,7 +47,7 @@ module TeXML
 
   # Given a raw string, returns a copy with all (La)TeX special
   # characters properly quoted.
-  def TeXML.quoteTeXString(str)
+  def TeXML.quote(str)
     tex = ''
     str.each_byte do |char|
       tex << (SPECIAL_CHAR_ESCAPES[char] or char)
@@ -196,7 +196,7 @@ module TeXML
       if parent.nodeName == 'env' && parent.getAttribute('name') == 'verbatim'
 	return @node.nodeValue	# TODO: is there /some/ quoting to do?
       else
-	return TeXML.quoteTeXString(@node.nodeValue)
+	return TeXML.quote(@node.nodeValue)
       end
     end
   end
