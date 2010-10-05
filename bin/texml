@@ -1,0 +1,12 @@
+#!/usr/bin/env ruby
+require 'rubygems'
+require 'texml'
+
+xml = ARGF.read
+begin
+  print TeXML.convert(xml)
+rescue XMLParserError
+  puts "#{$0}: #{$!}"
+  exit 1
+end
+

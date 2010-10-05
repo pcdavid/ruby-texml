@@ -1,4 +1,4 @@
-require File.join(File.dirname(__FILE__), '..', 'texml.rb')
+require File.join(File.dirname(__FILE__), '..', 'lib', 'texml.rb')
 require 'test/unit'
 
 class QuotingTest < Test::Unit::TestCase

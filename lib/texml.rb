@@ -1,6 +1,3 @@
-#!/usr/bin/env ruby
-require "xmltreebuilder"
-
 ########################################
 # texml.rb
 # Author: Pierre-Charles David (pcdavid@gmail.com)
@@ -17,6 +14,8 @@ require "xmltreebuilder"
 # alphaWorks: http://www.alphaworks.ibm.com/tech/texml
 #
 # Usage: % texml.rb < input.xml > output.tex
+
+require "xmltreebuilder"
 
 module TeXML
 
@@ -198,17 +197,4 @@ module TeXML
     end
   end
 
-end
-
-########################################
-# Main program
-
-if __FILE__ == $0
-  xml = ARGF.read
-  begin
-    print TeXML.convert(xml)
-  rescue XMLParserError
-    puts "#{$0}: #{$!}"
-    exit 1
-  end
 end
