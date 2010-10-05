@@ -42,7 +42,7 @@ module TeXML
   def TeXML.convert(xml)
     builder = XML::SimpleTreeBuilder.new
     tree = builder.parse(xml)
-    TeXML::Node.create(tree.documentElement).value
+    TeXML::Node.create(tree.documentElement).to_tex
   end
 
   # Given a raw string, returns a copy with all (La)TeX special
@@ -77,30 +77,25 @@ module TeXML
       @node = node
     end
 
-    # Should return the LaTeX equivalent value of this node
-    def value
-      raise "subclass responsibility"
-    end
-
     # Aggregates the values of all the children of this Node whose
     # node name is included in the parameters, in the document order
     # of the children.
     def childrenValue(*childTypes)
-      value = ""
+      tex = ''
       @node.childNodes do |kid|
 	if childTypes.include?(kid.nodeName)
 	  node = Node.create(kid)
-	  value << node.value unless node.nil?
+	  tex << node.to_tex unless node.nil?
 	end
       end
-      return value
+      return tex
     end
   end
 
   class TexmlNode < Node
     NODE_HANDLERS['TeXML'] = TexmlNode
 
-    def value
+    def to_tex
       return childrenValue('cmd', 'env', 'ctrl', 'spec', '#text')
     end
   end
@@ -108,7 +103,7 @@ module TeXML
   class CmdNode < Node
     NODE_HANDLERS['cmd'] = CmdNode
 
-    def value
+    def to_tex
       name = @node.getAttribute('name')
       return "\\#{name}" + childrenValue('opt') + childrenValue('parm') + ' '
     end
@@ -117,7 +112,7 @@ module TeXML
   class EnvNode < Node
     NODE_HANDLERS['env'] = EnvNode
 
-    def value
+    def to_tex
       name = @node.getAttribute('name')
       start = @node.getAttribute('begin')
       start = 'begin' if start == ''
@@ -132,7 +127,7 @@ module TeXML
   class OptNode < Node
     NODE_HANDLERS['opt'] = OptNode
 
-    def value
+    def to_tex
       return "[" + childrenValue('cmd', 'ctrl', 'spec', '#text') + "]"
     end
   end
@@ -140,7 +135,7 @@ module TeXML
   class ParmNode < Node
     NODE_HANDLERS['parm'] = ParmNode
 
-    def value
+    def to_tex
       return "{" + childrenValue('cmd', 'ctrl', 'spec', '#text') + "}"
     end
   end
@@ -148,7 +143,7 @@ module TeXML
   class CtrlNode < Node
     NODE_HANDLERS['ctrl'] = CtrlNode
 
-    def value
+    def to_tex
       ch = @node.getAttribute('ch')
       unless ch.nil?
 	return ch & 0x9F	# Control version of ch
@@ -161,7 +156,7 @@ module TeXML
   class GroupNode < Node
     NODE_HANDLERS['group'] = GroupNode
     
-    def value
+    def to_tex
       return "{" + childrenValue('cmd', 'env', 'ctrl', 'spec', '#text') + "}"
     end
   end
@@ -182,7 +177,7 @@ module TeXML
       'comment'	=> '%'
     }
 
-    def value
+    def to_tex
       cat = @node.getAttribute('cat')
       return (SPECIAL_MAP[cat] or '')
     end
@@ -191,7 +186,7 @@ module TeXML
   class TextNode < Node
     NODE_HANDLERS['#text'] = TextNode
 
-    def value
+    def to_tex
       parent = @node.parentNode
       if parent.nodeName == 'env' && parent.getAttribute('name') == 'verbatim'
 	return @node.nodeValue	# TODO: is there /some/ quoting to do?
