@@ -1,9 +1,10 @@
 #!/usr/bin/env ruby
+require "xmltreebuilder"
 
 ########################################
 # texml.rb
 # Author: Pierre-Charles David (pcdavid@gmail.com)
-# Version: 0.3.1
+# Version: 0.4
 # Web page: http://github.com/pcdavid/ruby-texml
 # Depends on: xmlparser (available on RAA)
 # License: WTFPL: http://sam.zoy.org/wtfpl/COPYING
@@ -36,16 +37,22 @@ module TeXML
     '\\'[0] => '$\\backslash${}'#'
   }
 
-  ##
+  # Converts a TeXML document, passed as a raw XML string, into the
+  # corresponding (La)TeX document.
+  def TeXML.convert(xml)
+    builder = XML::SimpleTreeBuilder.new
+    tree = builder.parse(xml)
+    TeXML::Node.create(tree.documentElement).value
+  end
+
   # Given a raw string, returns a copy with all (La)TeX special
   # characters properly quoted.
-  def TeXML.quoteTeXString(aString)
-    # TODO: is there a way to pre-allocate the size of the String?
-    str = ''
-    aString.each_byte do |char|
-      str << (SPECIAL_CHAR_ESCAPES[char] or char)
+  def TeXML.quoteTeXString(str)
+    tex = ''
+    str.each_byte do |char|
+      tex << (SPECIAL_CHAR_ESCAPES[char] or char)
     end
-    return str
+    return tex
   end
 
   # Keeps track of which classes can handle which type of nodes
@@ -200,17 +207,11 @@ end
 # Main program
 
 if __FILE__ == $0
-  require "xmltreebuilder"
-
   xml = ARGF.read
-  builder = XML::SimpleTreeBuilder.new
-
   begin
-    tree = builder.parse(xml)
+    print TeXML.convert(xml)
   rescue XMLParserError
-    line = builder.line
-    print "#{$0}: #{$!} (in line #{line})\n"
+    puts "#{$0}: #{$!}"
     exit 1
   end
-  print TeXML::Node.create(tree.documentElement).value
 end
