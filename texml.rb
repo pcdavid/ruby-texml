@@ -105,7 +105,9 @@ module TeXML
 
     def to_tex
       name = @node.getAttribute('name')
-      return "\\#{name}" + childrenValue('opt') + childrenValue('parm') + ' '
+      nl_before = (@node.getAttribute('nl1') == '1') ? "\n" : ''
+      nl_after = (@node.getAttribute('nl2') == '1') ? "\n" : ''
+      return nl_before + "\\#{name}" + childrenValue('opt') + childrenValue('parm') + ' ' + nl_after
     end
   end
 
@@ -191,7 +193,7 @@ module TeXML
       if parent.nodeName == 'env' && parent.getAttribute('name') == 'verbatim'
 	return @node.nodeValue	# TODO: is there /some/ quoting to do?
       else
-	return TeXML.quote(@node.nodeValue)
+        return TeXML.quote(@node.nodeValue)
       end
     end
   end
