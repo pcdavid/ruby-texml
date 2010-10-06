@@ -9,6 +9,8 @@ spec = Gem::Specification.new do |spec|
   spec.author = 'Pierre-Charles David'
   spec.email = 'pcdavid@gmail.com'
   spec.homepage = 'http://github.com/pcdavid/ruby-texml'
+
+  spec.add_dependency 'nokogiry', '>= 1.4.1'
   
   spec.executables = [ 'texml' ]
   spec.files = Dir['lib/*.rb'] + Dir['bin/texml']
