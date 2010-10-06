@@ -1,12 +1,30 @@
 #!/usr/bin/env ruby
-require 'rubygems'
-require 'texml'
+require 'optparse'
 
-xml = ARGF.read
 begin
-  print TeXML.convert(xml)
-rescue XMLParserError
-  puts "#{$0}: #{$!}"
+  require 'rubygems'
+  require 'texml'
+rescue LoadError
+  require File.join(File.dirname(__FILE__), '..', 'lib', 'texml.rb')
+end
+
+opts = OptionParser.new do |opts|
+  opts.banner = "texml: a TeXML to TeX converter"
+  opts.define_head "Usage: texml [options] <path>"
+  opts.separator ""
+  opts.separator "Options:"
+
+  opts.on("-h", "--help", "Show this message") do
+    puts opts
+    exit
+  end
+end
+opts.parse!
+
+path = ARGV.shift
+if path.to_s.strip.empty?
+  puts opts
   exit 1
 end
 
+print TeXML.convert(IO.read(path))
