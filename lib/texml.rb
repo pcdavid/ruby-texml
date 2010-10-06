@@ -1,23 +1,14 @@
-########################################
-# texml.rb
-# Author: Pierre-Charles David (pcdavid@gmail.com)
-# Version: 0.4
-# Web page: http://github.com/pcdavid/ruby-texml
-# Depends on: xmlparser (available on RAA)
-# License: WTFPL: http://sam.zoy.org/wtfpl/COPYING
+# -*- ruby -*-
 
-# Based of Douglas Lovell's paper:
-#   "TeXML: Typesetting with TeX", Douglas Lovell, IBM Research
-#   in TUGboat, Volume 20 (1999), No. 3
-#
-# Original implementation in Java by D. Lovell, available on IBM
-# alphaWorks: http://www.alphaworks.ibm.com/tech/texml
-#
-# Usage: % texml.rb < input.xml > output.tex
-
-require "xmltreebuilder"
+require 'nokogiri'
 
 module TeXML
+  # Converts a TeXML document, passed as a raw XML string, into the
+  # corresponding (La)TeX document.
+  def TeXML.convert(xml)
+    document = Nokogiri::XML(xml)
+    TeXML::Node.create(document.root).to_tex
+  end
 
   # Escaping sequences for LaTeX special characters
   SPECIAL_CHAR_ESCAPES = {
@@ -35,14 +26,6 @@ module TeXML
     '>'[0] => '$>${}',		#'
     '\\'[0] => '$\\backslash${}'#'
   }
-
-  # Converts a TeXML document, passed as a raw XML string, into the
-  # corresponding (La)TeX document.
-  def TeXML.convert(xml)
-    builder = XML::SimpleTreeBuilder.new
-    tree = builder.parse(xml)
-    TeXML::Node.create(tree.documentElement).to_tex
-  end
 
   # Given a raw string, returns a copy with all (La)TeX special
   # characters properly quoted.
@@ -63,10 +46,12 @@ module TeXML
     # Creates a node handler object appropriate for the specified XML
     # node, based on the name of the node (uses information from
     # NODE_HANDLERS).
-    def Node.create(domNode)
-      handlerClass = NODE_HANDLERS[domNode.nodeName]
+    def Node.create(node)
+      kind = node.name
+      kind = '#text' if kind == 'text'
+      handlerClass = NODE_HANDLERS[kind]
       if !handlerClass.nil?
-	handlerClass.new(domNode)
+	handlerClass.new(node)
       else
 	nil
       end
@@ -81,8 +66,8 @@ module TeXML
     # of the children.
     def childrenValue(*childTypes)
       tex = ''
-      @node.childNodes do |kid|
-	if childTypes.include?(kid.nodeName)
+      @node.children.each do |kid|
+	if childTypes.include?(kid.name) || (kid.text? && childTypes.include?('#text'))
 	  node = Node.create(kid)
 	  tex << node.to_tex unless node.nil?
 	end
@@ -103,9 +88,9 @@ module TeXML
     NODE_HANDLERS['cmd'] = CmdNode
 
     def to_tex
-      name = @node.getAttribute('name')
-      nl_before = (@node.getAttribute('nl1') == '1') ? "\n" : ''
-      nl_after = (@node.getAttribute('nl2') == '1') ? "\n" : ''
+      name = @node['name']
+      nl_before = (@node['nl1'] == '1') ? "\n" : ''
+      nl_after = (@node['nl2'] == '1') ? "\n" : ''
       return nl_before + "\\#{name}" + childrenValue('opt') + childrenValue('parm') + ' ' + nl_after
     end
   end
@@ -114,10 +99,10 @@ module TeXML
     NODE_HANDLERS['env'] = EnvNode
 
     def to_tex
-      name = @node.getAttribute('name')
-      start = @node.getAttribute('begin')
+      name = @node['name']
+      start = @node['begin']
       start = 'begin' if start == ''
-      stop = @node.getAttribute('end')
+      stop = @node['end']
       stop = 'end' if stop == ''
       return "\\#{start}{#{name}}\n" +
 	childrenValue('cmd', 'env', 'ctrl', 'spec', '#text') +
@@ -145,7 +130,7 @@ module TeXML
     NODE_HANDLERS['ctrl'] = CtrlNode
 
     def to_tex
-      ch = @node.getAttribute('ch')
+      ch = @node['ch']
       unless ch.nil?
 	return ch & 0x9F	# Control version of ch
       else
@@ -179,7 +164,7 @@ module TeXML
     }
 
     def to_tex
-      cat = @node.getAttribute('cat')
+      cat = @node['cat']
       return (SPECIAL_MAP[cat] or '')
     end
   end
@@ -188,11 +173,11 @@ module TeXML
     NODE_HANDLERS['#text'] = TextNode
 
     def to_tex
-      parent = @node.parentNode
-      if parent.nodeName == 'env' && parent.getAttribute('name') == 'verbatim'
-	return @node.nodeValue	# TODO: is there /some/ quoting to do?
+      parent = @node.parent
+      if parent.name == 'env' && parent['name'] == 'verbatim'
+	return @node.to_s
       else
-        return TeXML.quote(@node.nodeValue)
+        return TeXML.quote(@node.to_s)
       end
     end
   end
