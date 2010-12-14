@@ -132,7 +132,7 @@ module TeXML
     def to_tex
       ch = @node['ch']
       unless ch.nil?
-	return ch & 0x9F	# Control version of ch
+	return ch[0] & 0x9F	# Control version of ch
       else
 	nil
       end
