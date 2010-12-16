@@ -27,4 +27,5 @@ if path.to_s.strip.empty?
   exit 1
 end
 
-print TeXML.convert(IO.read(path))
+tex = TeXML.convert(IO.read(path))
+puts tex unless tex.empty?
