@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 # -*- ruby -*-
 
 require 'nokogiri'
@@ -6,25 +7,28 @@ module TeXML
   # Converts a TeXML document, passed as a raw XML string, into the
   # corresponding (La)TeX document.
   def TeXML.convert(xml)
-    document = Nokogiri::XML(xml)
+    document = Nokogiri::XML(xml) do |config|
+      config.options = Nokogiri::XML::ParseOptions::STRICT | Nokogiri::XML::ParseOptions::NOENT
+    end
     TeXML::Node.create(document.root).to_tex
   end
 
   # Escaping sequences for LaTeX special characters
   SPECIAL_CHAR_ESCAPES = {
-    '%'[0] => '\%{}',
+    '%'[0] => '\%',
     '{'[0] => '\{',
     '}'[0] => '\}',
-    '|'[0] => '$|${}',
-    '#'[0] => '\#{}',
-    '_'[0] => '\_{}',
-    '^'[0] => '\\char`\\^{}',
-    '~'[0] => '\\char`\\~{}',
-    '&'[0] => '\&{}',
-    '$'[0] => '\${}',		#'
-    '<'[0] => '$<${}',		#'
-    '>'[0] => '$>${}',		#'
-    '\\'[0] => '$\\backslash${}'#'
+    '|'[0] => '\textbar{}',
+    '#'[0] => '\#',
+    '_'[0] => '\_',
+    '^'[0] => '\\^{}',
+    '~'[0] => '\\~{}',
+    '&'[0] => '\&',
+    '$'[0] => '\textdollar{}',	#'
+    '<'[0] => '\textless{}',		#'
+    '>'[0] => '\textgreater{}',		#'
+    '\\'[0] => '\textbackslash{}',#'
+    '~'[0] => '\textasciitilde{}'
   }
 
   # Given a raw string, returns a copy with all (La)TeX special
@@ -175,9 +179,9 @@ module TeXML
     def to_tex
       parent = @node.parent
       if parent.name == 'env' && parent['name'] == 'verbatim'
-	return @node.to_s
+	return @node.content
       else
-        return TeXML.quote(@node.to_s)
+        return TeXML.quote(@node.content.lstrip)
       end
     end
   end
